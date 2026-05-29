@@ -161,4 +161,23 @@ class SoftNavigationTestHelper {
 
     return {softNav: softNavs[0], icp: validIcp};
   }
+
+  /**
+   * Waits for on ICP entry matching the givein `condition`. Returns all valid
+   * ICP entries (those with a largestContentfulPaint property) detected.
+   *
+   * @param {function(): (boolean)} condition A function that returns true when
+   * the relevant ICP has been found.
+   */
+  async waitForIcp(condition = entry => true) {
+    let validIcps = [];
+    while (!validIcps.some(condition)) {
+      const icpPromise =
+          SoftNavigationTestHelper.getPerformanceEntries('interaction-contentful-paint');
+      const newIcps = await this.withTimeoutMessage(
+          icpPromise, 'ICP not detected.', /*timeout=*/ 3000);
+      validIcps = validIcps.concat(newIcps.filter(entry => !!entry.largestContentfulPaint));
+    }
+    return validIcps;
+  }
 }
